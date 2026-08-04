@@ -9,7 +9,7 @@ from alembic import context
 
 from app.database import Base
 from app.config import settings
-from app.usuarios.models import Rol, Usuario
+from app.usuarios.models import Rol, Usuario, Docente, Estudiante
 from app.academico.models import PeriodoAcademico, Programa, Materia, Grupo
 from app.espacios.models import Edificio, Aula
 

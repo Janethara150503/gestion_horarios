@@ -3,8 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.usuarios import services, schemas
 from app.core.security import crear_access_token
-from app.core.dependencies import obtener_usuario_actual
-
+from app.core.dependencies import obtener_usuario_actual, requiere_rol
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
 
@@ -34,3 +33,20 @@ def login(credenciales: schemas.UsuarioLogin, db: Session = Depends(get_db)):
 @router.get("/yo", response_model=schemas.UsuarioOut)
 def obtener_mi_perfil(usuario=Depends(obtener_usuario_actual)):
     return usuario
+
+@router.post("/docentes", response_model=schemas.DocenteOut)
+def crear_docente(
+    datos: schemas.DocenteCreate,
+    db: Session = Depends(get_db),
+    usuario=Depends(requiere_rol("coordinador")),
+):
+    return services.crear_docente(db, datos)
+
+
+@router.post("/estudiantes", response_model=schemas.EstudianteOut)
+def crear_estudiante(
+    datos: schemas.EstudianteCreate,
+    db: Session = Depends(get_db),
+    usuario=Depends(requiere_rol("coordinador")),
+):
+    return services.crear_estudiante(db, datos)

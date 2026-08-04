@@ -31,3 +31,20 @@ def autenticar_usuario(db: Session, correo: str, password: str):
     if not usuario.activo:
         return None
     return usuario
+
+def crear_docente(db: Session, datos):
+    from app.usuarios.models import Docente
+    nuevo = Docente(**datos.model_dump())
+    db.add(nuevo)
+    db.commit()
+    db.refresh(nuevo)
+    return nuevo
+
+
+def crear_estudiante(db: Session, datos):
+    from app.usuarios.models import Estudiante
+    nuevo = Estudiante(**datos.model_dump())
+    db.add(nuevo)
+    db.commit()
+    db.refresh(nuevo)
+    return nuevo

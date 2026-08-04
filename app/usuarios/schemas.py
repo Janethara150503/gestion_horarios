@@ -41,3 +41,30 @@ class UsuarioLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+class DocenteCreate(BaseModel):
+    usuario_id: int
+    especialidad: Optional[str] = None
+
+
+class DocenteOut(BaseModel):
+    id: int
+    usuario_id: int
+    especialidad: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class EstudianteCreate(BaseModel):
+    usuario_id: int
+    grupo_id: int
+
+
+class EstudianteOut(BaseModel):
+    id: int
+    usuario_id: int
+    grupo_id: int
+
+    class Config:
+        from_attributes = True

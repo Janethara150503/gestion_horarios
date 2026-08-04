@@ -25,3 +25,23 @@ class Usuario(Base):
     creado_en = Column(DateTime(timezone=True), server_default=func.now())
 
     rol = relationship("Rol", back_populates="usuarios")
+
+class Docente(Base):
+    __tablename__ = "docentes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), unique=True, nullable=False)
+    especialidad = Column(String(150), nullable=True)
+
+    usuario = relationship("Usuario")
+
+
+class Estudiante(Base):
+    __tablename__ = "estudiantes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), unique=True, nullable=False)
+    grupo_id = Column(Integer, ForeignKey("grupos.id"), nullable=False)
+
+    usuario = relationship("Usuario")
+    grupo = relationship("Grupo")
