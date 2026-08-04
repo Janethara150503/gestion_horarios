@@ -10,6 +10,7 @@ from alembic import context
 from app.database import Base
 from app.config import settings
 from app.usuarios.models import Rol, Usuario
+from app.academico.models import PeriodoAcademico, Programa, Materia, Grupo
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
