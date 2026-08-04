@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.usuarios import services, schemas
 from app.core.security import crear_access_token
+from app.core.dependencies import obtener_usuario_actual
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
@@ -28,3 +29,8 @@ def login(credenciales: schemas.UsuarioLogin, db: Session = Depends(get_db)):
         )
     token = crear_access_token(data={"sub": usuario.correo, "rol": usuario.rol.nombre})
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.get("/yo", response_model=schemas.UsuarioOut)
+def obtener_mi_perfil(usuario=Depends(obtener_usuario_actual)):
+    return usuario
