@@ -4,6 +4,8 @@ from fastapi import HTTPException, status
 from app.solicitudes.models import SolicitudCambio
 from app.horarios.models import ExcepcionHorario
 from app.solicitudes import schemas
+from app.notificaciones.services import crear_notificacion
+from app.usuarios.models import Docente
 
 
 def crear_solicitud(db: Session, docente_id: int, datos: schemas.SolicitudCambioCreate):
@@ -63,7 +65,24 @@ def resolver_solicitud(db: Session, solicitud_id: int, coordinador_id: int, dato
         solicitud.excepcion_generada_id = nueva_excepcion.id
     else:
         solicitud.estado = "rechazada"
-
     db.commit()
     db.refresh(solicitud)
+
+    docente = db.query(Docente).filter(Docente.id == solicitud.docente_id).first()
+    if docente:
+        if solicitud.estado == "aprobada":
+            mensaje = f"Tu solicitud de cambio para el {solicitud.fecha_afectada} fue aprobada."
+            tipo = "solicitud_aprobada"
+        else:
+            mensaje = f"Tu solicitud de cambio para el {solicitud.fecha_afectada} fue rechazada."
+            tipo = "solicitud_rechazada"
+
+        crear_notificacion(
+            db=db,
+            usuario_id=docente.usuario_id,
+            mensaje=mensaje,
+            tipo=tipo,
+            referencia_id=solicitud.id,
+        )
+
     return solicitud
