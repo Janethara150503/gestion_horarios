@@ -3,6 +3,7 @@ from app.usuarios.routes import router as usuarios_router
 from app.academico.routes import router as academico_router
 from app.espacios.routes import router as espacios_router
 from app.horarios.routes import router as horarios_router
+from app.solicitudes.routes import router as solicitudes_router
 
 app = FastAPI(title="Sistema de Gestion de Horarios y Espacios Academicos")
 
@@ -10,6 +11,7 @@ app.include_router(usuarios_router)
 app.include_router(academico_router)
 app.include_router(espacios_router)
 app.include_router(horarios_router)
+app.include_router(solicitudes_router)
 
 
 @app.get("/")

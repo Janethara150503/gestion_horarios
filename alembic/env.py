@@ -13,6 +13,7 @@ from app.usuarios.models import Rol, Usuario, Docente, Estudiante
 from app.academico.models import PeriodoAcademico, Programa, Materia, Grupo
 from app.espacios.models import Edificio, Aula
 from app.horarios.models import HorarioClase, ExcepcionHorario
+from app.solicitudes.models import SolicitudCambio
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
