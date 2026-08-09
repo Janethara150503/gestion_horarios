@@ -57,6 +57,7 @@ const api = {
         }),
 
     obtenerMiPerfil: () => apiFetch("/usuarios/yo"),
+    obtenerMiEstudiante: () => apiFetch("/usuarios/estudiantes/yo"),
 
     registrarUsuario: (datos) =>
         apiFetch("/usuarios/registro", {

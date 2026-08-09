@@ -1,4 +1,5 @@
 async function iniciarSesion(correo, password) {
+    localStorage.removeItem("usuario");
     const respuesta = await api.login(correo, password);
     guardarToken(respuesta.access_token);
     return respuesta;

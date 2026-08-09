@@ -50,3 +50,16 @@ def crear_estudiante(
     usuario=Depends(requiere_rol("coordinador")),
 ):
     return services.crear_estudiante(db, datos)
+@router.get("/estudiantes/yo", response_model=schemas.EstudianteOut)
+def obtener_mi_estudiante(
+    db: Session = Depends(get_db),
+    usuario=Depends(requiere_rol("estudiante")),
+):
+    from app.usuarios.models import Estudiante
+    estudiante = db.query(Estudiante).filter(Estudiante.usuario_id == usuario.id).first()
+    if not estudiante:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Este usuario no tiene un registro de estudiante asociado",
+        )
+    return estudiante

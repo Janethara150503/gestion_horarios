@@ -42,12 +42,12 @@
                 const usuario = await obtenerUsuarioActual();
 
                 const destinosPorRol = {
-                    admin: "../paginas/admin-usuarios.html",
-                    coordinador: "../paginas/coordinador-academico.html",
-                    docente: "../paginas/docente-horario.html",
-                    estudiante: "../paginas/estudiante-horario.html",
-                    personal_admin: "../paginas/buscador-horarios.html",
-                };
+    admin: "admin-usuarios.html",
+    coordinador: "coordinador-academico.html",
+    docente: "docente-horario.html",
+    estudiante: "estudiante-horario.html",
+    personal_admin: "buscador-horarios.html",
+};
 
                 window.location.href = destinosPorRol[usuario.rol.nombre] || "../paginas/login.html";
             } catch (error) {

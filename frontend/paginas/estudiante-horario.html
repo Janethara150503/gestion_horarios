@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi horario - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor">
+        <h2 style="margin: 20px 0;">Mi horario</h2>
+        <div id="mensaje"></div>
+        <div class="tarjeta">
+            <table id="tabla-horario">
+                <thead>
+                    <tr>
+                        <th>Dia</th>
+                        <th>Hora inicio</th>
+                        <th>Hora fin</th>
+                        <th>Materia</th>
+                        <th>Docente</th>
+                        <th>Aula</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo-tabla">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        const DIAS_ORDEN = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+
+        async function iniciar() {
+            const usuario = await protegerPagina(["estudiante"]);
+            if (!usuario) return;
+
+            renderizarLayout(usuario, "estudiante-horario.html");
+            iniciarPolling();
+
+            const divMensaje = document.getElementById("mensaje");
+            const cuerpoTabla = document.getElementById("cuerpo-tabla");
+
+            try {
+                const miEstudiante = await api.obtenerMiEstudiante();
+                const todosLosHorarios = await api.listarHorarios();
+
+                const misHorarios = todosLosHorarios
+                    .filter((h) => h.grupo_id === miEstudiante.grupo_id)
+                    .sort((a, b) => DIAS_ORDEN.indexOf(a.dia_semana) - DIAS_ORDEN.indexOf(b.dia_semana));
+
+                if (misHorarios.length === 0) {
+                    divMensaje.innerHTML = '<div class="mensaje mensaje-error">No tienes clases registradas todavia.</div>';
+                    return;
+                }
+
+                for (const horario of misHorarios) {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
+                        <td>${capitalizar(horario.dia_semana)}</td>
+                        <td>${horario.hora_inicio}</td>
+                        <td>${horario.hora_fin}</td>
+                        <td>Materia #${horario.materia_id}</td>
+                        <td>Docente #${horario.docente_id}</td>
+                        <td>Aula #${horario.aula_id}</td>
+                    `;
+                    cuerpoTabla.appendChild(fila);
+                }
+            } catch (error) {
+                divMensaje.innerHTML = `<div class="mensaje mensaje-error">${error.message}</div>`;
+            }
+        }
+
+        function capitalizar(texto) {
+            return texto.charAt(0).toUpperCase() + texto.slice(1);
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>
