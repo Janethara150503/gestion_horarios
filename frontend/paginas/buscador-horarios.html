@@ -26,6 +26,8 @@
             <input type="text" id="filtro-texto" placeholder="Escribe para buscar..." style="width: 100%; padding: 8px; border: 1px solid var(--color-borde); border-radius: var(--radio-borde);">
         </div>
 
+        <div id="info-resultados" style="margin-bottom: 8px; color: var(--color-texto-claro); font-size: 0.9rem;"></div>
+
         <div class="tarjeta">
             <table>
                 <thead>
@@ -92,8 +94,8 @@
 
         function renderizarTabla(horarios) {
             const cuerpoTabla = document.getElementById("cuerpo-tabla");
+            const infoResultados = document.getElementById("info-resultados");
             cuerpoTabla.innerHTML = "";
-
             const ordenados = [...horarios].sort(
                 (a, b) => DIAS_ORDEN.indexOf(a.dia_semana) - DIAS_ORDEN.indexOf(b.dia_semana)
             );
@@ -115,6 +117,14 @@
                 `;
                 cuerpoTabla.appendChild(fila);
             });
+
+            const tipo = document.getElementById("filtro-tipo").value;
+            const texto = document.getElementById("filtro-texto").value.trim();
+            if (tipo !== "todos" && texto !== "") {
+                infoResultados.innerHTML = `Filtrando por <strong>${tipo}</strong>: "${texto}" — ${ordenados.length} resultado(s)`;
+            } else {
+                infoResultados.innerHTML = `Mostrando todos los horarios — ${ordenados.length} resultado(s)`;
+            }
         }
 
         function capitalizar(texto) {
