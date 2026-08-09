@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de espacios - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor">
+        <h2 style="margin: 20px 0;">Gestion de espacios</h2>
+        <div id="mensaje"></div>
+
+        <div class="pestanas">
+            <button class="tab-btn activa" data-tab="edificios">Edificios</button>
+            <button class="tab-btn" data-tab="aulas">Aulas</button>
+        </div>
+
+        <!-- EDIFICIOS -->
+        <div id="tab-edificios" class="panel-tab">
+            <div class="tarjeta">
+                <h3>Nuevo edificio</h3>
+                <form id="form-edificio" class="formulario">
+                    <label for="e-nombre">Nombre</label>
+                    <input type="text" id="e-nombre" required placeholder="ej. Edificio B">
+
+                    <label for="e-direccion">Direccion</label>
+                    <input type="text" id="e-direccion" placeholder="ej. Av. Principal 123">
+
+                    <button type="submit" class="boton">Crear edificio</button>
+                </form>
+            </div>
+            <div class="tarjeta">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Direccion</th></tr></thead>
+                    <tbody id="tabla-edificios"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AULAS -->
+        <div id="tab-aulas" class="panel-tab" style="display: none;">
+            <div class="tarjeta">
+                <h3>Nueva aula</h3>
+                <form id="form-aula" class="formulario">
+                    <label for="a-nombre">Nombre</label>
+                    <input type="text" id="a-nombre" required placeholder="ej. Aula 302">
+
+                    <label for="a-edificio">Edificio</label>
+                    <select id="a-edificio" required></select>
+
+                    <label for="a-capacidad">Capacidad</label>
+                    <input type="number" id="a-capacidad" required min="1">
+
+                    <label for="a-tipo">Tipo</label>
+                    <input type="text" id="a-tipo" placeholder="ej. laboratorio, salon regular">
+
+                    <label for="a-equipo">Equipo</label>
+                    <input type="text" id="a-equipo" placeholder="ej. proyector, aire acondicionado">
+
+                    <button type="submit" class="boton">Crear aula</button>
+                </form>
+            </div>
+            <div class="tarjeta">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Edificio</th><th>Capacidad</th><th>Tipo</th><th>Equipo</th></tr></thead>
+                    <tbody id="tabla-aulas"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        async function iniciar() {
+            const usuario = await protegerPagina(["coordinador"]);
+            if (!usuario) return;
+
+            renderizarLayout(usuario, "coordinador-espacios.html");
+            iniciarPolling();
+
+            configurarPestanas();
+            configurarFormularios();
+
+            await cargarEdificios();
+            await cargarAulas();
+        }
+
+        function configurarPestanas() {
+            document.querySelectorAll(".tab-btn").forEach((boton) => {
+                boton.addEventListener("click", () => {
+                    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("activa"));
+                    document.querySelectorAll(".panel-tab").forEach((p) => (p.style.display = "none"));
+                    boton.classList.add("activa");
+                    document.getElementById(`tab-${boton.dataset.tab}`).style.display = "block";
+                });
+            });
+        }
+
+        function mostrarError(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-error">${mensaje}</div>`;
+        }
+
+        function mostrarExito(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-exito">${mensaje}</div>`;
+        }
+
+        async function cargarEdificios() {
+            try {
+                const edificios = await api.listarEdificios();
+                document.getElementById("tabla-edificios").innerHTML = edificios
+                    .map((e) => `<tr><td>${e.nombre}</td><td>${e.direccion || "-"}</td></tr>`)
+                    .join("");
+
+                document.getElementById("a-edificio").innerHTML = edificios
+                    .map((e) => `<option value="${e.id}">${e.nombre}</option>`)
+                    .join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        async function cargarAulas() {
+            try {
+                const aulas = await api.listarAulas();
+                document.getElementById("tabla-aulas").innerHTML = aulas
+                    .map(
+                        (a) =>
+                            `<tr><td>${a.nombre}</td><td>${a.edificio.nombre}</td><td>${a.capacidad}</td><td>${a.tipo || "-"}</td><td>${a.equipo || "-"}</td></tr>`
+                    )
+                    .join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        function configurarFormularios() {
+            document.getElementById("form-edificio").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    await api.crearEdificio({
+                        nombre: document.getElementById("e-nombre").value,
+                        direccion: document.getElementById("e-direccion").value || null,
+                    });
+                    mostrarExito("Edificio creado correctamente");
+                    e.target.reset();
+                    await cargarEdificios();
+                } catch (error) {
+                    mostrarError(error.message);
+                }
+            });
+
+            document.getElementById("form-aula").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    await api.crearAula({
+                        nombre: document.getElementById("a-nombre").value,
+                        edificio_id: parseInt(document.getElementById("a-edificio").value),
+                        capacidad: parseInt(document.getElementById("a-capacidad").value),
+                        tipo: document.getElementById("a-tipo").value || null,
+                        equipo: document.getElementById("a-equipo").value || null,
+                    });
+                    mostrarExito("Aula creada correctamente");
+                    e.target.reset();
+                    await cargarAulas();
+                } catch (error) {
+                    mostrarError(error.message);
+                }
+            });
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>
