@@ -66,9 +66,9 @@
                         <td>${capitalizar(horario.dia_semana)}</td>
                         <td>${horario.hora_inicio}</td>
                         <td>${horario.hora_fin}</td>
-                        <td>Materia #${horario.materia_id}</td>
-                        <td>Docente #${horario.docente_id}</td>
-                        <td>Aula #${horario.aula_id}</td>
+                        <td>${horario.materia.nombre}</td>
+                        <td>${horario.docente.usuario ? horario.docente.usuario.nombre_completo : 'Docente #' + horario.docente_id}</td>
+                        <td>${horario.aula.nombre}</td>
                     `;
                     cuerpoTabla.appendChild(fila);
                 }

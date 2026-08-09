@@ -51,10 +51,10 @@ class DocenteOut(BaseModel):
     id: int
     usuario_id: int
     especialidad: Optional[str] = None
+    usuario: Optional["UsuarioOut"] = None
 
     class Config:
         from_attributes = True
-
 
 class EstudianteCreate(BaseModel):
     usuario_id: int
