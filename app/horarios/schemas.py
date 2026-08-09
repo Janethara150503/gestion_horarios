@@ -36,6 +36,17 @@ class HorarioClaseCreate(HorarioClaseBase):
 
 class HorarioClaseOut(HorarioClaseBase):
     id: int
+    materia: "MateriaOut"
+    docente: "DocenteOut"
+    aula: "AulaOut"
+    grupo: "GrupoOut"
 
     class Config:
         from_attributes = True
+
+
+from app.academico.schemas import MateriaOut, GrupoOut
+from app.espacios.schemas import AulaOut
+from app.usuarios.schemas import DocenteOut
+
+HorarioClaseOut.model_rebuild()
