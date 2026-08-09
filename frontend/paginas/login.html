@@ -27,6 +27,9 @@
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
     <script>
+        eliminarToken();
+        localStorage.removeItem("usuario");
+
         const formulario = document.getElementById("form-login");
         const divMensaje = document.getElementById("mensaje-error");
 
