@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis solicitudes - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor">
+        <h2 style="margin: 20px 0;">Mis solicitudes</h2>
+        <div id="mensaje"></div>
+        <div class="tarjeta">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha afectada</th>
+                        <th>Motivo</th>
+                        <th>Estado</th>
+                        <th>Respuesta del coordinador</th>
+                        <th>Enviada el</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo-tabla">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        async function iniciar() {
+            const usuario = await protegerPagina(["docente"]);
+            if (!usuario) return;
+
+            renderizarLayout(usuario, "docente-solicitudes.html");
+            iniciarPolling();
+
+            const divMensaje = document.getElementById("mensaje");
+            const cuerpoTabla = document.getElementById("cuerpo-tabla");
+
+            try {
+                const misSolicitudes = await api.listarMisSolicitudes();
+
+                if (misSolicitudes.length === 0) {
+                    divMensaje.innerHTML = '<div class="mensaje mensaje-error">Aun no has enviado ninguna solicitud.</div>';
+                    return;
+                }
+
+                misSolicitudes
+                    .sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en))
+                    .forEach((solicitud) => {
+                        const fila = document.createElement("tr");
+                        fila.innerHTML = `
+                            <td>${solicitud.fecha_afectada}</td>
+                            <td>${solicitud.motivo}</td>
+                            <td><span class="badge badge-${solicitud.estado}">${solicitud.estado}</span></td>
+                            <td>${solicitud.respuesta_coordinador || "-"}</td>
+                            <td>${new Date(solicitud.creado_en).toLocaleString()}</td>
+                        `;
+                        cuerpoTabla.appendChild(fila);
+                    });
+            } catch (error) {
+                divMensaje.innerHTML = `<div class="mensaje mensaje-error">${error.message}</div>`;
+            }
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>
