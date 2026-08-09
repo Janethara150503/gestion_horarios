@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion academica - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor">
+        <h2 style="margin: 20px 0;">Gestion academica</h2>
+        <div id="mensaje"></div>
+
+        <div class="pestanas">
+            <button class="tab-btn activa" data-tab="periodos">Periodos</button>
+            <button class="tab-btn" data-tab="programas">Programas</button>
+            <button class="tab-btn" data-tab="materias">Materias</button>
+            <button class="tab-btn" data-tab="grupos">Grupos</button>
+        </div>
+
+        <!-- PERIODOS -->
+        <div id="tab-periodos" class="panel-tab">
+            <div class="tarjeta">
+                <h3>Nuevo periodo</h3>
+                <form id="form-periodo" class="formulario">
+                    <label for="p-nombre">Nombre</label>
+                    <input type="text" id="p-nombre" required placeholder="ej. 2026-2">
+
+                    <label for="p-inicio">Fecha inicio</label>
+                    <input type="date" id="p-inicio" required>
+
+                    <label for="p-fin">Fecha fin</label>
+                    <input type="date" id="p-fin" required>
+
+                    <button type="submit" class="boton">Crear periodo</button>
+                </form>
+            </div>
+            <div class="tarjeta">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Inicio</th><th>Fin</th><th>Activo</th></tr></thead>
+                    <tbody id="tabla-periodos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PROGRAMAS -->
+        <div id="tab-programas" class="panel-tab" style="display: none;">
+            <div class="tarjeta">
+                <h3>Nuevo programa</h3>
+                <form id="form-programa" class="formulario">
+                    <label for="pr-nombre">Nombre</label>
+                    <input type="text" id="pr-nombre" required placeholder="ej. Ingenieria de Sistemas">
+
+                    <label for="pr-descripcion">Descripcion</label>
+                    <textarea id="pr-descripcion" rows="2"></textarea>
+
+                    <button type="submit" class="boton">Crear programa</button>
+                </form>
+            </div>
+            <div class="tarjeta">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Descripcion</th></tr></thead>
+                    <tbody id="tabla-programas"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MATERIAS -->
+        <div id="tab-materias" class="panel-tab" style="display: none;">
+            <div class="tarjeta">
+                <h3>Nueva materia</h3>
+                <form id="form-materia" class="formulario">
+                    <label for="m-nombre">Nombre</label>
+                    <input type="text" id="m-nombre" required placeholder="ej. Bases de Datos II">
+
+                    <label for="m-programa">Programa</label>
+                    <select id="m-programa" required></select>
+
+                    <label for="m-creditos">Creditos</label>
+                    <input type="number" id="m-creditos" min="1">
+
+                    <button type="submit" class="boton">Crear materia</button>
+                </form>
+            </div>
+            <div class="tarjeta">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Programa</th><th>Creditos</th></tr></thead>
+                    <tbody id="tabla-materias"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- GRUPOS -->
+        <div id="tab-grupos" class="panel-tab" style="display: none;">
+            <div class="tarjeta">
+                <h3>Nuevo grupo</h3>
+                <form id="form-grupo" class="formulario">
+                    <label for="g-nombre">Nombre</label>
+                    <input type="text" id="g-nombre" required placeholder="ej. Sistemas 3-A">
+
+                    <label for="g-programa">Programa</label>
+                    <select id="g-programa" required></select>
+
+                    <label for="g-periodo">Periodo</label>
+                    <select id="g-periodo" required></select>
+
+                    <button type="submit" class="boton">Crear grupo</button>
+                </form>
+            </div>
+            <div class="tarjeta">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Programa</th><th>Periodo</th></tr></thead>
+                    <tbody id="tabla-grupos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        let cachePeriodos = [];
+        let cacheProgramas = [];
+
+        async function iniciar() {
+            const usuario = await protegerPagina(["coordinador"]);
+            if (!usuario) return;
+
+            renderizarLayout(usuario, "coordinador-academico.html");
+            iniciarPolling();
+
+            configurarPestanas();
+            configurarFormularios();
+
+            await cargarPeriodos();
+            await cargarProgramas();
+            await cargarMaterias();
+            await cargarGrupos();
+        }
+
+        function configurarPestanas() {
+            document.querySelectorAll(".tab-btn").forEach((boton) => {
+                boton.addEventListener("click", () => {
+                    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("activa"));
+                    document.querySelectorAll(".panel-tab").forEach((p) => (p.style.display = "none"));
+                    boton.classList.add("activa");
+                    document.getElementById(`tab-${boton.dataset.tab}`).style.display = "block";
+                });
+            });
+        }
+
+        function mostrarError(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-error">${mensaje}</div>`;
+        }
+
+        function mostrarExito(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-exito">${mensaje}</div>`;
+        }
+
+        // ---------- PERIODOS ----------
+        async function cargarPeriodos() {
+            try {
+                cachePeriodos = await api.listarPeriodos();
+                const tabla = document.getElementById("tabla-periodos");
+                tabla.innerHTML = cachePeriodos
+                    .map((p) => `<tr><td>${p.nombre}</td><td>${p.fecha_inicio}</td><td>${p.fecha_fin}</td><td>${p.activo ? "Si" : "No"}</td></tr>`)
+                    .join("");
+
+                const selectorGrupo = document.getElementById("g-periodo");
+                selectorGrupo.innerHTML = cachePeriodos.map((p) => `<option value="${p.id}">${p.nombre}</option>`).join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        // ---------- PROGRAMAS ----------
+        async function cargarProgramas() {
+            try {
+                cacheProgramas = await api.listarProgramas();
+                const tabla = document.getElementById("tabla-programas");
+                tabla.innerHTML = cacheProgramas
+                    .map((p) => `<tr><td>${p.nombre}</td><td>${p.descripcion || "-"}</td></tr>`)
+                    .join("");
+
+                const opciones = cacheProgramas.map((p) => `<option value="${p.id}">${p.nombre}</option>`).join("");
+                document.getElementById("m-programa").innerHTML = opciones;
+                document.getElementById("g-programa").innerHTML = opciones;
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        // ---------- MATERIAS ----------
+        async function cargarMaterias() {
+            try {
+                const materias = await api.listarMaterias();
+                const tabla = document.getElementById("tabla-materias");
+                tabla.innerHTML = materias
+                    .map((m) => `<tr><td>${m.nombre}</td><td>${m.programa.nombre}</td><td>${m.creditos || "-"}</td></tr>`)
+                    .join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        // ---------- GRUPOS ----------
+        async function cargarGrupos() {
+            try {
+                const grupos = await api.listarGrupos();
+                const tabla = document.getElementById("tabla-grupos");
+                tabla.innerHTML = grupos
+                    .map((g) => `<tr><td>${g.nombre}</td><td>${g.programa.nombre}</td><td>${g.periodo.nombre}</td></tr>`)
+                    .join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        function configurarFormularios() {
+            document.getElementById("form-periodo").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    await api.crearPeriodo({
+                        nombre: document.getElementById("p-nombre").value,
+                        fecha_inicio: document.getElementById("p-inicio").value,
+                        fecha_fin: document.getElementById("p-fin").value,
+                        activo: true,
+                    });
+                    mostrarExito("Periodo creado correctamente");
+                    e.target.reset();
+                    await cargarPeriodos();
+                } catch (error) {
+                    mostrarError(error.message);
+                }
+            });
+
+            document.getElementById("form-programa").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    await api.crearPrograma({
+                        nombre: document.getElementById("pr-nombre").value,
+                        descripcion: document.getElementById("pr-descripcion").value || null,
+                    });
+                    mostrarExito("Programa creado correctamente");
+                    e.target.reset();
+                    await cargarProgramas();
+                } catch (error) {
+                    mostrarError(error.message);
+                }
+            });
+
+            document.getElementById("form-materia").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const creditos = document.getElementById("m-creditos").value;
+                    await api.crearMateria({
+                        nombre: document.getElementById("m-nombre").value,
+                        programa_id: parseInt(document.getElementById("m-programa").value),
+                        creditos: creditos ? parseInt(creditos) : null,
+                    });
+                    mostrarExito("Materia creada correctamente");
+                    e.target.reset();
+                    await cargarMaterias();
+                } catch (error) {
+                    mostrarError(error.message);
+                }
+            });
+
+            document.getElementById("form-grupo").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    await api.crearGrupo({
+                        nombre: document.getElementById("g-nombre").value,
+                        programa_id: parseInt(document.getElementById("g-programa").value),
+                        periodo_id: parseInt(document.getElementById("g-periodo").value),
+                    });
+                    mostrarExito("Grupo creado correctamente");
+                    e.target.reset();
+                    await cargarGrupos();
+                } catch (error) {
+                    mostrarError(error.message);
+                }
+            });
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>
