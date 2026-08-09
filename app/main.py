@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.usuarios.routes import router as usuarios_router
 from app.academico.routes import router as academico_router
 from app.espacios.routes import router as espacios_router
@@ -7,6 +8,14 @@ from app.solicitudes.routes import router as solicitudes_router
 from app.notificaciones.routes import router as notificaciones_router
 
 app = FastAPI(title="Sistema de Gestion de Horarios y Espacios Academicos")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(usuarios_router)
 app.include_router(academico_router)
