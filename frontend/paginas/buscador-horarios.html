@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de horarios - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor">
+        <h2 style="margin: 20px 0;">Buscador de horarios</h2>
+        <div id="mensaje"></div>
+
+        <div class="tarjeta">
+            <label for="filtro-tipo">Buscar por</label>
+            <select id="filtro-tipo" style="width: 100%; padding: 8px; margin-bottom: 12px; border: 1px solid var(--color-borde); border-radius: var(--radio-borde);">
+                <option value="todos">Todos los horarios</option>
+                <option value="grupo">Grupo</option>
+                <option value="docente">Docente</option>
+                <option value="aula">Aula</option>
+            </select>
+
+            <input type="text" id="filtro-texto" placeholder="Escribe para buscar..." style="width: 100%; padding: 8px; border: 1px solid var(--color-borde); border-radius: var(--radio-borde);">
+        </div>
+
+        <div class="tarjeta">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dia</th>
+                        <th>Hora</th>
+                        <th>Materia</th>
+                        <th>Grupo</th>
+                        <th>Docente</th>
+                        <th>Aula</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo-tabla">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        const DIAS_ORDEN = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+        let todosLosHorarios = [];
+
+        async function iniciar() {
+            const usuario = await protegerPagina(["personal_admin"]);
+            if (!usuario) return;
+
+            renderizarLayout(usuario, "buscador-horarios.html");
+            iniciarPolling();
+
+            const divMensaje = document.getElementById("mensaje");
+
+            try {
+                todosLosHorarios = await api.listarHorarios();
+                renderizarTabla(todosLosHorarios);
+            } catch (error) {
+                divMensaje.innerHTML = `<div class="mensaje mensaje-error">${error.message}</div>`;
+            }
+
+            document.getElementById("filtro-tipo").addEventListener("change", aplicarFiltro);
+            document.getElementById("filtro-texto").addEventListener("input", aplicarFiltro);
+        }
+
+        function aplicarFiltro() {
+            const tipo = document.getElementById("filtro-tipo").value;
+            const texto = document.getElementById("filtro-texto").value.trim().toLowerCase();
+
+            if (tipo === "todos" || texto === "") {
+                renderizarTabla(todosLosHorarios);
+                return;
+            }
+
+            const filtrados = todosLosHorarios.filter((h) => {
+                if (tipo === "grupo") return h.grupo.nombre.toLowerCase().includes(texto);
+                if (tipo === "docente") return h.docente.usuario.nombre_completo.toLowerCase().includes(texto);
+                if (tipo === "aula") return h.aula.nombre.toLowerCase().includes(texto);
+                return true;
+            });
+
+            renderizarTabla(filtrados);
+        }
+
+        function renderizarTabla(horarios) {
+            const cuerpoTabla = document.getElementById("cuerpo-tabla");
+            cuerpoTabla.innerHTML = "";
+
+            const ordenados = [...horarios].sort(
+                (a, b) => DIAS_ORDEN.indexOf(a.dia_semana) - DIAS_ORDEN.indexOf(b.dia_semana)
+            );
+
+            if (ordenados.length === 0) {
+                cuerpoTabla.innerHTML = '<tr><td colspan="6">No se encontraron resultados.</td></tr>';
+                return;
+            }
+
+            ordenados.forEach((horario) => {
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>${capitalizar(horario.dia_semana)}</td>
+                    <td>${horario.hora_inicio} - ${horario.hora_fin}</td>
+                    <td>${horario.materia.nombre}</td>
+                    <td>${horario.grupo.nombre}</td>
+                    <td>${horario.docente.usuario ? horario.docente.usuario.nombre_completo : "-"}</td>
+                    <td>${horario.aula.nombre}</td>
+                `;
+                cuerpoTabla.appendChild(fila);
+            });
+        }
+
+        function capitalizar(texto) {
+            return texto.charAt(0).toUpperCase() + texto.slice(1);
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>
