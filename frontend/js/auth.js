@@ -8,7 +8,7 @@ async function iniciarSesion(correo, password) {
 function cerrarSesion() {
     eliminarToken();
     localStorage.removeItem("usuario");
-    window.location.href = "/paginas/login.html";
+    window.location.href = "login.html";
 }
 
 async function obtenerUsuarioActual() {
@@ -24,7 +24,7 @@ async function obtenerUsuarioActual() {
 async function protegerPagina(rolesPermitidos = null) {
     const token = obtenerToken();
     if (!token) {
-        window.location.href = "/paginas/login.html";
+        window.location.href = "login.html";
         return null;
     }
 
@@ -33,13 +33,13 @@ async function protegerPagina(rolesPermitidos = null) {
 
         if (rolesPermitidos && !rolesPermitidos.includes(usuario.rol.nombre)) {
             alert("No tienes permiso para ver esta pagina");
-            window.location.href = "/paginas/login.html";
+            window.location.href = "login.html";
             return null;
         }
 
         return usuario;
     } catch (error) {
-        window.location.href = "/paginas/login.html";
+        window.location.href = "login.html";
         return null;
     }
 }

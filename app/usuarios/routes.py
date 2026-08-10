@@ -63,3 +63,11 @@ def obtener_mi_estudiante(
             detail="Este usuario no tiene un registro de estudiante asociado",
         )
     return estudiante
+
+@router.get("/docentes", response_model=list[schemas.DocenteOut])
+def listar_docentes(
+    db: Session = Depends(get_db),
+    usuario=Depends(requiere_rol("coordinador")),
+):
+    from app.usuarios.models import Docente
+    return db.query(Docente).all()

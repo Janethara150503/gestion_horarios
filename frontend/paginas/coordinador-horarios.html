@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de horarios - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor">
+        <h2 style="margin: 20px 0;">Gestion de horarios</h2>
+        <div id="mensaje"></div>
+
+        <div class="tarjeta">
+            <h3>Nuevo horario de clase</h3>
+            <form id="form-horario" class="formulario">
+                <label for="h-grupo">Grupo</label>
+                <select id="h-grupo" required></select>
+
+                <label for="h-materia">Materia</label>
+                <select id="h-materia" required></select>
+
+                <label for="h-docente">Docente</label>
+                <select id="h-docente" required></select>
+
+                <label for="h-aula">Aula</label>
+                <select id="h-aula" required></select>
+
+                <label for="h-periodo">Periodo</label>
+                <select id="h-periodo" required></select>
+
+                <label for="h-dia">Dia de la semana</label>
+                <select id="h-dia" required>
+                    <option value="lunes">Lunes</option>
+                    <option value="martes">Martes</option>
+                    <option value="miercoles">Miercoles</option>
+                    <option value="jueves">Jueves</option>
+                    <option value="viernes">Viernes</option>
+                    <option value="sabado" selected>Sabado</option>
+                    <option value="domingo">Domingo</option>
+                </select>
+
+                <label for="h-inicio">Hora inicio</label>
+                <input type="time" id="h-inicio" required>
+
+                <label for="h-fin">Hora fin</label>
+                <input type="time" id="h-fin" required>
+
+                <button type="submit" class="boton">Crear horario</button>
+            </form>
+        </div>
+
+        <div class="tarjeta">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dia</th><th>Hora</th><th>Materia</th><th>Grupo</th><th>Docente</th><th>Aula</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-horarios"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        const DIAS_ORDEN = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+
+        async function iniciar() {
+            const usuario = await protegerPagina(["coordinador"]);
+            if (!usuario) return;
+
+            renderizarLayout(usuario, "coordinador-horarios.html");
+            iniciarPolling();
+
+            await cargarSelectores();
+            await cargarHorarios();
+
+            document.getElementById("form-horario").addEventListener("submit", crearHorario);
+        }
+
+        function mostrarError(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-error">${mensaje}</div>`;
+        }
+
+        function mostrarExito(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-exito">${mensaje}</div>`;
+        }
+
+        async function cargarSelectores() {
+            try {
+                const [grupos, materias, docentes, aulas, periodos] = await Promise.all([
+                    api.listarGrupos(),
+                    api.listarMaterias(),
+                    api.listarDocentes(),
+                    api.listarAulas(),
+                    api.listarPeriodos(),
+                ]);
+
+                document.getElementById("h-grupo").innerHTML = grupos.map((g) => `<option value="${g.id}">${g.nombre}</option>`).join("");
+                document.getElementById("h-materia").innerHTML = materias.map((m) => `<option value="${m.id}">${m.nombre}</option>`).join("");
+                document.getElementById("h-docente").innerHTML = docentes
+                    .map((d) => `<option value="${d.id}">${d.usuario ? d.usuario.nombre_completo : "Docente #" + d.id}</option>`)
+                    .join("");
+                document.getElementById("h-aula").innerHTML = aulas.map((a) => `<option value="${a.id}">${a.nombre}</option>`).join("");
+                document.getElementById("h-periodo").innerHTML = periodos.map((p) => `<option value="${p.id}">${p.nombre}</option>`).join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        async function cargarHorarios() {
+            try {
+                const horarios = await api.listarHorarios();
+                const ordenados = [...horarios].sort(
+                    (a, b) => DIAS_ORDEN.indexOf(a.dia_semana) - DIAS_ORDEN.indexOf(b.dia_semana)
+                );
+                document.getElementById("tabla-horarios").innerHTML = ordenados
+                    .map(
+                        (h) => `
+                        <tr>
+                            <td>${capitalizar(h.dia_semana)}</td>
+                            <td>${h.hora_inicio} - ${h.hora_fin}</td>
+                            <td>${h.materia.nombre}</td>
+                            <td>${h.grupo.nombre}</td>
+                            <td>${h.docente.usuario ? h.docente.usuario.nombre_completo : "-"}</td>
+                            <td>${h.aula.nombre}</td>
+                        </tr>`
+                    )
+                    .join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        async function crearHorario(evento) {
+            evento.preventDefault();
+            document.getElementById("mensaje").innerHTML = "";
+
+            const datos = {
+                grupo_id: parseInt(document.getElementById("h-grupo").value),
+                materia_id: parseInt(document.getElementById("h-materia").value),
+                docente_id: parseInt(document.getElementById("h-docente").value),
+                aula_id: parseInt(document.getElementById("h-aula").value),
+                periodo_id: parseInt(document.getElementById("h-periodo").value),
+                dia_semana: document.getElementById("h-dia").value,
+                hora_inicio: document.getElementById("h-inicio").value + ":00",
+                hora_fin: document.getElementById("h-fin").value + ":00",
+                activo: true,
+            };
+
+            try {
+                await api.crearHorario(datos);
+                mostrarExito("Horario creado correctamente");
+                evento.target.reset();
+                await cargarHorarios();
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        function capitalizar(texto) {
+            return texto.charAt(0).toUpperCase() + texto.slice(1);
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>

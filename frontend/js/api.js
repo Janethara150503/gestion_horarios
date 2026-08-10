@@ -31,7 +31,7 @@ async function apiFetch(endpoint, opciones = {}) {
 
     if (respuesta.status === 401) {
         eliminarToken();
-        window.location.href = "/paginas/login.html";
+        window.location.href = "login.html";
         throw new Error("Sesion expirada, por favor inicia sesion de nuevo");
     }
 
@@ -58,6 +58,7 @@ const api = {
 
     obtenerMiPerfil: () => apiFetch("/usuarios/yo"),
     obtenerMiEstudiante: () => apiFetch("/usuarios/estudiantes/yo"),
+    listarDocentes: () => apiFetch("/usuarios/docentes"),
 
     registrarUsuario: (datos) =>
         apiFetch("/usuarios/registro", {
