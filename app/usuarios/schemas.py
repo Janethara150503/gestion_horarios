@@ -65,6 +65,7 @@ class EstudianteOut(BaseModel):
     id: int
     usuario_id: int
     grupo_id: int
+    usuario: Optional["UsuarioOut"] = None
 
     class Config:
         from_attributes = True

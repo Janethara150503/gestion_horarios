@@ -71,3 +71,11 @@ def listar_docentes(
 ):
     from app.usuarios.models import Docente
     return db.query(Docente).all()
+
+@router.get("/estudiantes", response_model=list[schemas.EstudianteOut])
+def listar_estudiantes(
+    db: Session = Depends(get_db),
+    usuario=Depends(requiere_rol("coordinador")),
+):
+    from app.usuarios.models import Estudiante
+    return db.query(Estudiante).all()

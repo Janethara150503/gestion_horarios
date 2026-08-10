@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docentes y estudiantes - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor">
+        <h2 style="margin: 20px 0;">Docentes y estudiantes</h2>
+        <div id="mensaje"></div>
+
+        <div class="pestanas">
+            <button class="tab-btn activa" data-tab="docentes">Docentes</button>
+            <button class="tab-btn" data-tab="estudiantes">Estudiantes</button>
+        </div>
+
+        <!-- DOCENTES -->
+        <div id="tab-docentes" class="panel-tab">
+            <div class="tarjeta">
+                <h3>Asignar rol de docente</h3>
+                <p style="color: var(--color-texto-claro); font-size: 0.9rem; margin-bottom: 12px;">
+                    Primero registra un usuario nuevo con rol "docente" en el sistema, luego usa aqui su ID para asignarle el registro de docente.
+                </p>
+                <form id="form-nuevo-usuario-docente" class="formulario">
+                    <label for="ud-nombre">Nombre completo</label>
+                    <input type="text" id="ud-nombre" required>
+
+                    <label for="ud-correo">Correo</label>
+                    <input type="email" id="ud-correo" required>
+
+                    <label for="ud-password">Contrasena</label>
+                    <input type="password" id="ud-password" required>
+
+                    <label for="ud-especialidad">Especialidad (opcional)</label>
+                    <input type="text" id="ud-especialidad" placeholder="ej. Matematicas">
+
+                    <button type="submit" class="boton">Registrar docente</button>
+                </form>
+            </div>
+            <div class="tarjeta">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Correo</th><th>Especialidad</th></tr></thead>
+                    <tbody id="tabla-docentes"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ESTUDIANTES -->
+        <div id="tab-estudiantes" class="panel-tab" style="display: none;">
+            <div class="tarjeta">
+                <h3>Asignar rol de estudiante</h3>
+                <form id="form-nuevo-usuario-estudiante" class="formulario">
+                    <label for="ue-nombre">Nombre completo</label>
+                    <input type="text" id="ue-nombre" required>
+
+                    <label for="ue-correo">Correo</label>
+                    <input type="email" id="ue-correo" required>
+
+                    <label for="ue-password">Contrasena</label>
+                    <input type="password" id="ue-password" required>
+
+                    <label for="ue-grupo">Grupo</label>
+                    <select id="ue-grupo" required></select>
+
+                    <button type="submit" class="boton">Registrar estudiante</button>
+                </form>
+            </div>
+            <div class="tarjeta">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Correo</th><th>Grupo</th></tr></thead>
+                    <tbody id="tabla-estudiantes"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        let cacheGrupos = [];
+
+        async function iniciar() {
+            const usuario = await protegerPagina(["coordinador"]);
+            if (!usuario) return;
+
+            renderizarLayout(usuario, "coordinador-personas.html");
+            iniciarPolling();
+
+            configurarPestanas();
+            configurarFormularios();
+
+            cacheGrupos = await api.listarGrupos();
+            document.getElementById("ue-grupo").innerHTML = cacheGrupos
+                .map((g) => `<option value="${g.id}">${g.nombre}</option>`)
+                .join("");
+
+            await cargarDocentes();
+            await cargarEstudiantes();
+        }
+
+        function configurarPestanas() {
+            document.querySelectorAll(".tab-btn").forEach((boton) => {
+                boton.addEventListener("click", () => {
+                    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("activa"));
+                    document.querySelectorAll(".panel-tab").forEach((p) => (p.style.display = "none"));
+                    boton.classList.add("activa");
+                    document.getElementById(`tab-${boton.dataset.tab}`).style.display = "block";
+                });
+            });
+        }
+
+        function mostrarError(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-error">${mensaje}</div>`;
+        }
+
+        function mostrarExito(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-exito">${mensaje}</div>`;
+        }
+
+        async function cargarDocentes() {
+            try {
+                const docentes = await api.listarDocentes();
+                document.getElementById("tabla-docentes").innerHTML = docentes
+                    .map(
+                        (d) =>
+                            `<tr><td>${d.usuario ? d.usuario.nombre_completo : "-"}</td><td>${d.usuario ? d.usuario.correo : "-"}</td><td>${d.especialidad || "-"}</td></tr>`
+                    )
+                    .join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        async function cargarEstudiantes() {
+            try {
+                const estudiantes = await api.listarEstudiantes();
+                document.getElementById("tabla-estudiantes").innerHTML = estudiantes
+                    .map((e) => {
+                        const grupo = cacheGrupos.find((g) => g.id === e.grupo_id);
+                        return `<tr><td>${e.usuario ? e.usuario.nombre_completo : "-"}</td><td>${e.usuario ? e.usuario.correo : "-"}</td><td>${grupo ? grupo.nombre : "-"}</td></tr>`;
+                    })
+                    .join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        function configurarFormularios() {
+            document.getElementById("form-nuevo-usuario-docente").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const nuevoUsuario = await api.registrarUsuario({
+                        nombre_completo: document.getElementById("ud-nombre").value,
+                        correo: document.getElementById("ud-correo").value,
+                        password: document.getElementById("ud-password").value,
+                        rol_id: 3,
+                    });
+
+                    await api.crearDocente({
+                        usuario_id: nuevoUsuario.id,
+                        especialidad: document.getElementById("ud-especialidad").value || null,
+                    });
+
+                    mostrarExito("Docente registrado correctamente");
+                    e.target.reset();
+                    await cargarDocentes();
+                } catch (error) {
+                    mostrarError(error.message);
+                }
+            });
+
+            document.getElementById("form-nuevo-usuario-estudiante").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const nuevoUsuario = await api.registrarUsuario({
+                        nombre_completo: document.getElementById("ue-nombre").value,
+                        correo: document.getElementById("ue-correo").value,
+                        password: document.getElementById("ue-password").value,
+                        rol_id: 4,
+                    });
+
+                    await api.crearEstudiante({
+                        usuario_id: nuevoUsuario.id,
+                        grupo_id: parseInt(document.getElementById("ue-grupo").value),
+                    });
+
+                    mostrarExito("Estudiante registrado correctamente");
+                    e.target.reset();
+                    await cargarEstudiantes();
+                } catch (error) {
+                    mostrarError(error.message);
+                }
+            });
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>

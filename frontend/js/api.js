@@ -59,6 +59,11 @@ const api = {
     obtenerMiPerfil: () => apiFetch("/usuarios/yo"),
     obtenerMiEstudiante: () => apiFetch("/usuarios/estudiantes/yo"),
     listarDocentes: () => apiFetch("/usuarios/docentes"),
+    listarEstudiantes: () => apiFetch("/usuarios/estudiantes"),
+    crearDocente: (datos) =>
+        apiFetch("/usuarios/docentes", { method: "POST", body: JSON.stringify(datos) }),
+    crearEstudiante: (datos) =>
+        apiFetch("/usuarios/estudiantes", { method: "POST", body: JSON.stringify(datos) }),
 
     registrarUsuario: (datos) =>
         apiFetch("/usuarios/registro", {
