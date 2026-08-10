@@ -23,12 +23,26 @@ const MENU_POR_ROL = {
     ],
 };
 
-function renderizarLayout(usuario, paginaActual) {
+async function renderizarLayout(usuario, paginaActual) {
     const opcionesMenu = MENU_POR_ROL[usuario.rol.nombre] || [];
+
+    let contadorSolicitudes = 0;
+    if (usuario.rol.nombre === "coordinador") {
+        try {
+            const pendientes = await api.listarSolicitudesPendientes();
+            contadorSolicitudes = pendientes.length;
+        } catch (error) {
+            console.error("No se pudo obtener el contador de solicitudes", error);
+        }
+    }
 
     const enlacesMenu = opcionesMenu
         .map((opcion) => {
             const clase = opcion.href === paginaActual ? "activo" : "";
+            const esSolicitudes = opcion.href === "coordinador-solicitudes.html";
+            if (esSolicitudes && contadorSolicitudes > 0) {
+                return `<a href="${opcion.href}" class="${clase} badge-notificacion" data-contador="${contadorSolicitudes}">${opcion.texto}</a>`;
+            }
             return `<a href="${opcion.href}" class="${clase}">${opcion.texto}</a>`;
         })
         .join("");

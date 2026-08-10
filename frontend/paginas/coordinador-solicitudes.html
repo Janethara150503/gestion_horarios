@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitudes pendientes - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor">
+        <h2 style="margin: 20px 0;">Solicitudes pendientes</h2>
+        <div id="contador-solicitudes" style="margin-bottom: 16px;"></div>
+        <div id="mensaje"></div>
+
+        <div id="lista-solicitudes"></div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        let cacheAulas = [];
+
+        async function iniciar() {
+            const usuario = await protegerPagina(["coordinador"]);
+            if (!usuario) return;
+
+            await renderizarLayout(usuario, "coordinador-solicitudes.html");
+            iniciarPolling();
+
+            cacheAulas = await api.listarAulas();
+            await cargarSolicitudes();
+        }
+
+        function mostrarError(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-error">${mensaje}</div>`;
+        }
+
+        function mostrarExito(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-exito">${mensaje}</div>`;
+        }
+
+        async function cargarSolicitudes() {
+            const contenedor = document.getElementById("lista-solicitudes");
+            const contadorTexto = document.getElementById("contador-solicitudes");
+            try {
+                const solicitudes = await api.listarSolicitudesPendientes();
+
+                if (solicitudes.length === 0) {
+                    contadorTexto.innerHTML = '<span class="badge" style="background-color: #e8e8e8; color: #555; font-size: 0.95rem; padding: 6px 14px;">0 solicitudes pendientes</span>';
+                    contenedor.innerHTML = '<div class="tarjeta">No hay solicitudes pendientes por revisar.</div>';
+                    return;
+                }
+
+                contadorTexto.innerHTML = `<span class="badge badge-pendiente" style="font-size: 0.95rem; padding: 6px 14px;">${solicitudes.length} solicitud(es) pendiente(s)</span>`;
+
+                const opcionesAulas = cacheAulas.map((a) => `<option value="${a.id}">${a.nombre}</option>`).join("");
+
+                contenedor.innerHTML = solicitudes
+                    .map(
+                        (s) => `
+                    <div class="tarjeta" id="solicitud-${s.id}">
+                        <p><strong>Fecha afectada:</strong> ${s.fecha_afectada}</p>
+                        <p><strong>Motivo:</strong> ${s.motivo}</p>
+                        <p><strong>Horario original ID:</strong> ${s.horario_clase_id}</p>
+
+                        <div class="formulario" style="margin-top: 12px;">
+                            <label>Nueva aula (si aprueba)</label>
+                            <select id="aula-${s.id}">
+                                <option value="">-- mantener aula original --</option>
+                                ${opcionesAulas}
+                            </select>
+
+                            <label>Nueva hora inicio (opcional)</label>
+                            <input type="time" id="hora-inicio-${s.id}">
+
+                            <label>Nueva hora fin (opcional)</label>
+                            <input type="time" id="hora-fin-${s.id}">
+
+                            <label>Respuesta / comentario</label>
+                            <textarea id="respuesta-${s.id}" rows="2" placeholder="Comentario opcional"></textarea>
+
+                            <div style="margin-top: 12px;">
+                                <button class="boton" onclick="resolver(${s.id}, true)">Aprobar</button>
+                                <button class="boton boton-peligro" onclick="resolver(${s.id}, false)">Rechazar</button>
+                            </div>
+                        </div>
+                    </div>
+                `
+                    )
+                    .join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        async function resolver(solicitudId, aprobar) {
+            const aulaId = document.getElementById(`aula-${solicitudId}`).value;
+            const horaInicio = document.getElementById(`hora-inicio-${solicitudId}`).value;
+            const horaFin = document.getElementById(`hora-fin-${solicitudId}`).value;
+            const respuesta = document.getElementById(`respuesta-${solicitudId}`).value;
+
+            const datos = {
+                aprobar: aprobar,
+                respuesta_coordinador: respuesta || null,
+                aula_id: aulaId ? parseInt(aulaId) : null,
+                hora_inicio: horaInicio ? horaInicio + ":00" : null,
+                hora_fin: horaFin ? horaFin + ":00" : null,
+            };
+
+            try {
+                await api.resolverSolicitud(solicitudId, datos);
+                mostrarExito(aprobar ? "Solicitud aprobada correctamente" : "Solicitud rechazada correctamente");
+                await cargarSolicitudes();
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>

@@ -81,7 +81,7 @@
             const usuario = await protegerPagina(["coordinador"]);
             if (!usuario) return;
 
-            renderizarLayout(usuario, "coordinador-espacios.html");
+            await renderizarLayout(usuario, "coordinador-espacios.html");
             iniciarPolling();
 
             configurarPestanas();

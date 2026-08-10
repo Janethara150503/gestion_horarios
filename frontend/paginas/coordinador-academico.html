@@ -130,7 +130,7 @@
             const usuario = await protegerPagina(["coordinador"]);
             if (!usuario) return;
 
-            renderizarLayout(usuario, "coordinador-academico.html");
+            await renderizarLayout(usuario, "coordinador-academico.html");
             iniciarPolling();
 
             configurarPestanas();
@@ -161,7 +161,6 @@
             document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-exito">${mensaje}</div>`;
         }
 
-        // ---------- PERIODOS ----------
         async function cargarPeriodos() {
             try {
                 cachePeriodos = await api.listarPeriodos();
@@ -177,7 +176,6 @@
             }
         }
 
-        // ---------- PROGRAMAS ----------
         async function cargarProgramas() {
             try {
                 cacheProgramas = await api.listarProgramas();
@@ -194,7 +192,6 @@
             }
         }
 
-        // ---------- MATERIAS ----------
         async function cargarMaterias() {
             try {
                 const materias = await api.listarMaterias();
@@ -207,7 +204,6 @@
             }
         }
 
-        // ---------- GRUPOS ----------
         async function cargarGrupos() {
             try {
                 const grupos = await api.listarGrupos();

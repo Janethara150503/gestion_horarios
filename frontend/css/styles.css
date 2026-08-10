@@ -220,3 +220,25 @@ table th {
 .badge-pendiente { background-color: #fff3cd; color: #856404; }
 .badge-aprobada { background-color: #d4edda; color: #155724; }
 .badge-rechazada { background-color: #f8d7da; color: #721c24; }
+
+.badge-notificacion {
+    position: relative;
+}
+
+.badge-notificacion::after {
+    content: attr(data-contador);
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background-color: #e74c3c;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}

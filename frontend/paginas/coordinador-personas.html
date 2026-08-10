@@ -24,7 +24,7 @@
             <div class="tarjeta">
                 <h3>Asignar rol de docente</h3>
                 <p style="color: var(--color-texto-claro); font-size: 0.9rem; margin-bottom: 12px;">
-                    Primero registra un usuario nuevo con rol "docente" en el sistema, luego usa aqui su ID para asignarle el registro de docente.
+                    Registra un usuario nuevo y automaticamente se le asigna el registro de docente.
                 </p>
                 <form id="form-nuevo-usuario-docente" class="formulario">
                     <label for="ud-nombre">Nombre completo</label>
@@ -89,7 +89,7 @@
             const usuario = await protegerPagina(["coordinador"]);
             if (!usuario) return;
 
-            renderizarLayout(usuario, "coordinador-personas.html");
+            await renderizarLayout(usuario, "coordinador-personas.html");
             iniciarPolling();
 
             configurarPestanas();

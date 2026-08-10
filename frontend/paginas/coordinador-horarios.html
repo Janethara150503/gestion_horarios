@@ -75,7 +75,7 @@
             const usuario = await protegerPagina(["coordinador"]);
             if (!usuario) return;
 
-            renderizarLayout(usuario, "coordinador-horarios.html");
+            await renderizarLayout(usuario, "coordinador-horarios.html");
             iniciarPolling();
 
             await cargarSelectores();
