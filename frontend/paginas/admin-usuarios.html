@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de usuarios - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor">
+        <h2 style="margin: 20px 0;">Gestion de usuarios</h2>
+        <div id="mensaje"></div>
+
+        <div class="tarjeta">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-usuarios"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        const ROLES = [
+            { id: 1, nombre: "admin" },
+            { id: 2, nombre: "coordinador" },
+            { id: 3, nombre: "docente" },
+            { id: 4, nombre: "estudiante" },
+            { id: 5, nombre: "personal_admin" },
+        ];
+
+        async function iniciar() {
+            const usuario = await protegerPagina(["admin"]);
+            if (!usuario) return;
+
+            await renderizarLayout(usuario, "admin-usuarios.html");
+            iniciarPolling();
+
+            await cargarUsuarios();
+        }
+
+        function mostrarError(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-error">${mensaje}</div>`;
+        }
+
+        function mostrarExito(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-exito">${mensaje}</div>`;
+        }
+
+        async function cargarUsuarios() {
+            const tabla = document.getElementById("tabla-usuarios");
+            try {
+                const usuarios = await api.listarUsuarios();
+
+                tabla.innerHTML = usuarios
+                    .map((u) => {
+                        const opcionesRol = ROLES.map(
+                            (r) => `<option value="${r.id}" ${r.nombre === u.rol.nombre ? "selected" : ""}>${r.nombre}</option>`
+                        ).join("");
+
+                        const textoBoton = u.activo ? "Desactivar" : "Activar";
+                        const claseBoton = u.activo ? "boton-peligro" : "";
+
+                        return `
+                        <tr>
+                            <td>${u.nombre_completo}</td>
+                            <td>${u.correo}</td>
+                            <td>
+                                <select onchange="cambiarRol(${u.id}, this.value)" style="padding: 4px;">
+                                    ${opcionesRol}
+                                </select>
+                            </td>
+                            <td>${u.activo ? '<span class="badge badge-aprobada">Activo</span>' : '<span class="badge badge-rechazada">Inactivo</span>'}</td>
+                            <td>
+                                <button class="boton ${claseBoton}" style="margin-top: 0; padding: 6px 12px;" onclick="cambiarEstado(${u.id}, ${!u.activo})">${textoBoton}</button>
+                            </td>
+                        </tr>`;
+                    })
+                    .join("");
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        async function cambiarRol(usuarioId, nuevoRolId) {
+            try {
+                await api.cambiarRolUsuario(usuarioId, parseInt(nuevoRolId));
+                mostrarExito("Rol actualizado correctamente");
+                await cargarUsuarios();
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        async function cambiarEstado(usuarioId, nuevoEstado) {
+            try {
+                await api.cambiarEstadoUsuario(usuarioId, nuevoEstado);
+                mostrarExito(nuevoEstado ? "Usuario activado correctamente" : "Usuario desactivado correctamente");
+                await cargarUsuarios();
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>

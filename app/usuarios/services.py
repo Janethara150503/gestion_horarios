@@ -48,3 +48,26 @@ def crear_estudiante(db: Session, datos):
     db.commit()
     db.refresh(nuevo)
     return nuevo
+
+def listar_usuarios(db: Session):
+    return db.query(Usuario).all()
+
+
+def actualizar_rol_usuario(db: Session, usuario_id: int, rol_id: int):
+    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not usuario:
+        return None
+    usuario.rol_id = rol_id
+    db.commit()
+    db.refresh(usuario)
+    return usuario
+
+
+def actualizar_estado_usuario(db: Session, usuario_id: int, activo: bool):
+    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not usuario:
+        return None
+    usuario.activo = activo
+    db.commit()
+    db.refresh(usuario)
+    return usuario

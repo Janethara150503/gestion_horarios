@@ -79,3 +79,36 @@ def listar_estudiantes(
 ):
     from app.usuarios.models import Estudiante
     return db.query(Estudiante).all()
+
+@router.get("/", response_model=list[schemas.UsuarioOut])
+def listar_usuarios(
+    db: Session = Depends(get_db),
+    usuario=Depends(requiere_rol("admin")),
+):
+    return services.listar_usuarios(db)
+
+
+@router.put("/{usuario_id}/rol", response_model=schemas.UsuarioOut)
+def cambiar_rol_usuario(
+    usuario_id: int,
+    datos: schemas.UsuarioActualizarRol,
+    db: Session = Depends(get_db),
+    usuario=Depends(requiere_rol("admin")),
+):
+    actualizado = services.actualizar_rol_usuario(db, usuario_id, datos.rol_id)
+    if not actualizado:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+    return actualizado
+
+
+@router.put("/{usuario_id}/estado", response_model=schemas.UsuarioOut)
+def cambiar_estado_usuario(
+    usuario_id: int,
+    datos: schemas.UsuarioActualizarEstado,
+    db: Session = Depends(get_db),
+    usuario=Depends(requiere_rol("admin")),
+):
+    actualizado = services.actualizar_estado_usuario(db, usuario_id, datos.activo)
+    if not actualizado:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+    return actualizado

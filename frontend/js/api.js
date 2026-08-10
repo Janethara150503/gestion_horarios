@@ -60,6 +60,11 @@ const api = {
     obtenerMiEstudiante: () => apiFetch("/usuarios/estudiantes/yo"),
     listarDocentes: () => apiFetch("/usuarios/docentes"),
     listarEstudiantes: () => apiFetch("/usuarios/estudiantes"),
+    listarUsuarios: () => apiFetch("/usuarios/"),
+    cambiarRolUsuario: (id, rolId) =>
+        apiFetch(`/usuarios/${id}/rol`, { method: "PUT", body: JSON.stringify({ rol_id: rolId }) }),
+    cambiarEstadoUsuario: (id, activo) =>
+        apiFetch(`/usuarios/${id}/estado`, { method: "PUT", body: JSON.stringify({ activo: activo }) }),
     crearDocente: (datos) =>
         apiFetch("/usuarios/docentes", { method: "POST", body: JSON.stringify(datos) }),
     crearEstudiante: (datos) =>

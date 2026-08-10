@@ -69,3 +69,10 @@ class EstudianteOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UsuarioActualizarRol(BaseModel):
+    rol_id: int
+
+
+class UsuarioActualizarEstado(BaseModel):
+    activo: bool
