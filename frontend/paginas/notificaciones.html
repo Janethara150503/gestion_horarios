@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificaciones - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor">
+        <h2 style="margin: 20px 0;">Notificaciones</h2>
+        <div id="mensaje"></div>
+
+        <div id="lista-notificaciones"></div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        let usuarioActual = null;
+
+        async function iniciar() {
+            usuarioActual = await protegerPagina();
+            if (!usuarioActual) return;
+
+            await renderizarLayout(usuarioActual, "notificaciones.html");
+            iniciarPolling();
+
+            await cargarNotificaciones();
+        }
+
+        function mostrarError(mensaje) {
+            document.getElementById("mensaje").innerHTML = `<div class="mensaje mensaje-error">${mensaje}</div>`;
+        }
+
+        function formatearFecha(fechaIso) {
+            const fecha = new Date(fechaIso);
+            return fecha.toLocaleString();
+        }
+
+        const ETIQUETAS_TIPO = {
+            solicitud_aprobada: "Solicitud aprobada",
+            solicitud_rechazada: "Solicitud rechazada",
+            cambio_horario: "Cambio de horario",
+            general: "General",
+        };
+
+        async function cargarNotificaciones() {
+            const contenedor = document.getElementById("lista-notificaciones");
+            try {
+                const notificaciones = await api.listarNotificaciones();
+
+                if (notificaciones.length === 0) {
+                    contenedor.innerHTML = '<div class="tarjeta">No tienes notificaciones todavia.</div>';
+                    return;
+                }
+
+                contenedor.innerHTML = notificaciones
+                    .map((n) => {
+                        const etiquetaTipo = ETIQUETAS_TIPO[n.tipo] || n.tipo;
+                        const estiloFondo = n.leida ? "" : "border-left: 4px solid var(--color-acento);";
+                        const botonLeida = n.leida
+                            ? '<span class="badge badge-aprobada">Leida</span>'
+                            : `<button class="boton" style="margin-top: 0; padding: 6px 12px;" onclick="marcarLeida(${n.id})">Marcar como leida</button>`;
+
+                        return `
+                        <div class="tarjeta" style="${estiloFondo}">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <span class="badge badge-pendiente">${etiquetaTipo}</span>
+                                    <p style="margin-top: 8px;">${n.mensaje}</p>
+                                    <p style="color: var(--color-texto-claro); font-size: 0.8rem; margin-top: 6px;">${formatearFecha(n.creado_en)}</p>
+                                </div>
+                                <div>${botonLeida}</div>
+                            </div>
+                        </div>`;
+                    })
+                    .join("");
+
+                await marcarTodasVistas(notificaciones);
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        async function marcarTodasVistas(notificaciones) {
+            const noVistas = notificaciones.filter((n) => !n.vista);
+            for (const n of noVistas) {
+                try {
+                    await api.marcarNotificacionVista(n.id);
+                } catch (error) {
+                    console.error("No se pudo marcar como vista", error);
+                }
+            }
+        }
+
+        async function marcarLeida(notificacionId) {
+            try {
+                await api.marcarNotificacionLeida(notificacionId);
+                await cargarNotificaciones();
+            } catch (error) {
+                mostrarError(error.message);
+            }
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>
