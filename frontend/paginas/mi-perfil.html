@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi perfil - Sistema de Horarios</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <div id="layout-contenedor"></div>
+
+    <div class="contenedor" style="max-width: 500px;">
+        <h2 style="margin: 20px 0;">Mi perfil</h2>
+        <div id="mensaje"></div>
+
+        <div class="tarjeta">
+            <p style="margin-bottom: 14px;"><strong>Nombre completo:</strong><br>
+                <span id="p-nombre"></span>
+            </p>
+            <p style="margin-bottom: 14px;"><strong>Correo:</strong><br>
+                <span id="p-correo"></span>
+            </p>
+            <p style="margin-bottom: 14px;"><strong>Rol:</strong><br>
+                <span id="p-rol"></span>
+            </p>
+            <p style="margin-bottom: 14px;"><strong>Estado de la cuenta:</strong><br>
+                <span id="p-estado"></span>
+            </p>
+            <p><strong>Miembro desde:</strong><br>
+                <span id="p-creado"></span>
+            </p>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+    <script>
+        async function iniciar() {
+            const usuario = await protegerPagina();
+            if (!usuario) return;
+
+            await renderizarLayout(usuario, "mi-perfil.html");
+            iniciarPolling();
+
+            document.getElementById("p-nombre").textContent = usuario.nombre_completo;
+            document.getElementById("p-correo").textContent = usuario.correo;
+            document.getElementById("p-rol").textContent = usuario.rol.nombre;
+            document.getElementById("p-estado").innerHTML = usuario.activo
+                ? '<span class="badge badge-aprobada">Activo</span>'
+                : '<span class="badge badge-rechazada">Inactivo</span>';
+            document.getElementById("p-creado").textContent = new Date(usuario.creado_en).toLocaleDateString();
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>
