@@ -23,6 +23,8 @@ const MENU_POR_ROL = {
     ],
 };
 
+const API_ORIGEN = "http://127.0.0.1:8000";
+
 async function renderizarLayout(usuario, paginaActual) {
     const opcionesMenu = MENU_POR_ROL[usuario.rol.nombre] || [];
 
@@ -36,6 +38,16 @@ async function renderizarLayout(usuario, paginaActual) {
         }
     }
 
+    let nombreInstitucion = "Sistema de Horarios";
+    let logoUrl = null;
+    try {
+        const config = await api.obtenerConfiguracionPublica();
+        nombreInstitucion = config.nombre_institucion;
+        logoUrl = config.logo_url;
+    } catch (error) {
+        console.error("No se pudo cargar la configuracion de la institucion", error);
+    }
+
     const enlacesMenu = opcionesMenu
         .map((opcion) => {
             const clase = opcion.href === paginaActual ? "activo" : "";
@@ -47,9 +59,13 @@ async function renderizarLayout(usuario, paginaActual) {
         })
         .join("");
 
+    const logoHtml = logoUrl
+        ? `<img src="${API_ORIGEN}${logoUrl}" alt="Logo" style="height: 32px; margin-right: 10px; border-radius: 4px; vertical-align: middle;">`
+        : "";
+
     const html = `
         <div class="navbar">
-            <div class="marca">Sistema de Horarios</div>
+            <div class="marca" style="display: flex; align-items: center;">${logoHtml}${nombreInstitucion}</div>
             <div class="usuario-info">
                 <span id="contador-notificaciones"></span>
                 <a href="notificaciones.html" style="color: white;">Notificaciones</a>

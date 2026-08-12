@@ -49,6 +49,36 @@ async function apiFetch(endpoint, opciones = {}) {
     return datos;
 }
 
+async function apiFetchArchivo(endpoint, formData) {
+    const token = obtenerToken();
+
+    const headers = {};
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const respuesta = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: "POST",
+        headers,
+        body: formData,
+    });
+
+    if (respuesta.status === 401) {
+        eliminarToken();
+        window.location.href = "login.html";
+        throw new Error("Sesion expirada, por favor inicia sesion de nuevo");
+    }
+
+    const datos = await respuesta.json();
+
+    if (!respuesta.ok) {
+        const mensaje = datos && datos.detail ? datos.detail : "Ocurrio un error inesperado";
+        throw new Error(mensaje);
+    }
+
+    return datos;
+}
+
 const api = {
     login: (correo, password) =>
         apiFetch("/usuarios/login", {
@@ -65,6 +95,15 @@ const api = {
         apiFetch(`/usuarios/${id}/rol`, { method: "PUT", body: JSON.stringify({ rol_id: rolId }) }),
     cambiarEstadoUsuario: (id, activo) =>
         apiFetch(`/usuarios/${id}/estado`, { method: "PUT", body: JSON.stringify({ activo: activo }) }),
+    obtenerConfiguracion: () => apiFetch("/configuracion/"),
+    obtenerConfiguracionPublica: () => apiFetch("/configuracion/publica"),
+    actualizarConfiguracion: (datos) =>
+        apiFetch("/configuracion/", { method: "PUT", body: JSON.stringify(datos) }),
+    subirLogo: (archivo) => {
+        const formData = new FormData();
+        formData.append("archivo", archivo);
+        return apiFetchArchivo("/configuracion/logo", formData);
+    },
     crearDocente: (datos) =>
         apiFetch("/usuarios/docentes", { method: "POST", body: JSON.stringify(datos) }),
     crearEstudiante: (datos) =>

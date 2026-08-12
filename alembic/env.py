@@ -15,6 +15,7 @@ from app.espacios.models import Edificio, Aula
 from app.horarios.models import HorarioClase, ExcepcionHorario
 from app.solicitudes.models import SolicitudCambio
 from app.notificaciones.models import Notificacion
+from app.configuracion.models import ConfiguracionInstitucion
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
