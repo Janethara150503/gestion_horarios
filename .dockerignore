@@ -3,6 +3,5 @@ __pycache__/
 *.pyc
 .env
 .git/
-frontend/
 docs/
 alembic/versions/__pycache__/
