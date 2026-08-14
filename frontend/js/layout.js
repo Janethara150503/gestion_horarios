@@ -23,7 +23,7 @@ const MENU_POR_ROL = {
     ],
 };
 
-const API_ORIGEN = "http://127.0.0.1:8000";
+const API_ORIGEN = "https://gestion-horarios-1475.onrender.com";
 
 async function renderizarLayout(usuario, paginaActual) {
     const opcionesMenu = MENU_POR_ROL[usuario.rol.nombre] || [];

@@ -1,4 +1,4 @@
-const API_BASE_URL = "";
+const API_BASE_URL = "https://gestion-horarios-1475.onrender.com";
 
 function obtenerToken() {
     return localStorage.getItem("token");
