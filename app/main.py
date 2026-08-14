@@ -20,6 +20,7 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/app", StaticFiles(directory="frontend", html=True), name="frontend")
 
 app.include_router(usuarios_router)
 app.include_router(academico_router)
