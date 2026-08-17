@@ -6,43 +6,51 @@ FASES COMPLETADAS
 
 
 
-Fase uno, analisis del problema: cerrada. Problema, reglas de negocio y alcance del MVP definidos y documentados.
+Fase uno, analisis del problema: cerrada.
 
 
 
-Fase dos, usuarios y permisos: cerrada. Cinco roles definidos con matriz de permisos completa.
+Fase dos, usuarios y permisos: cerrada.
 
 
 
-Fase tres, arquitectura del sistema: cerrada. Monolito modular con FastAPI y PostgreSQL para el backend, HTML CSS y JavaScript vanilla para el frontend.
+Fase tres, arquitectura del sistema: cerrada.
 
 
 
-Fase cuatro, modelo de datos: cerrada. Dieciseis tablas disenadas e implementadas, con validacion de solapamiento de horarios en doble capa.
+Fase cuatro, modelo de datos: cerrada.
 
 
 
-Fase cinco, diagramas: cerrada. Diagrama de clases y diagrama de casos de uso generados y validados.
+Fase cinco, diagramas: cerrada.
 
 
 
-Fase seis, backend: cerrada. Siete modulos completos, todos probados con peticiones reales antes de conectar el frontend.
+Fase seis, backend: cerrada.
 
 
 
-Fase siete, frontend: cerrada. Dieciseis pantallas completas, cubriendo los cinco roles del sistema, todas probadas con datos reales contra el backend.
+Fase siete, frontend: cerrada.
 
 
 
-FASES PENDIENTES
+Fase ocho, integracion: cerrada. Se realizo integracion continua durante toda la Fase siete, con revision final de extremo a extremo de los cinco roles sin incidencias.
 
 
 
-Fase ocho, integracion: se realizo integracion continua durante toda la Fase siete, ya que cada pantalla del frontend se probo directamente contra el backend real conforme se construia. Queda pendiente una revision general de extremo a extremo, recorriendo el flujo completo de cada rol una vez mas para detectar cualquier detalle suelto antes del despliegue.
+Fase nueve, despliegue: cerrada. Backend desplegado en Render como Web Service con Docker, base de datos PostgreSQL en Render, y frontend desplegado como Static Site en Render. Los datos de prueba se migraron desde el entorno local al entorno de produccion mediante pg\_dump. El backend acepta peticiones tanto del frontend en produccion como del entorno local, para permitir continuar el desarrollo despues del despliegue inicial.
 
 
 
-Fase nueve, despliegue: pendiente por completo. Incluye dockerizar la aplicacion, desplegar en Render, y probar el acceso real desde internet.
+URLS DE PRODUCCION
+
+
+
+Backend: https://gestion-horarios-1475.onrender.com
+
+Frontend: https://gestion-horarios-frontend.onrender.com/paginas/login.html
+
+Repositorio: github.com/Janethara150503/gestion\_horarios
 
 
 
@@ -50,21 +58,21 @@ APRENDIZAJES Y DECISIONES TECNICAS DESTACADAS
 
 
 
-El uso de restricciones EXCLUDE USING GIST en PostgreSQL como segunda capa de proteccion contra choques de horario, complementando la validacion en la aplicacion, resulto ser una decision de diseno solida y fue probada exitosamente de forma independiente.
+El uso de restricciones EXCLUDE USING GIST en PostgreSQL como segunda capa de proteccion contra choques de horario resulto ser una decision de diseno solida.
 
 
 
-La decision de construir el frontend sin framework permitio entender a fondo el manejo manual de estado, autenticacion y comunicacion con la API, aunque incremento el numero de archivos a mantener manualmente.
+Los servicios gratuitos de Render entran en reposo tras periodos de inactividad, lo que genera una demora de treinta a sesenta segundos en la primera peticion tras un tiempo sin uso. Esto es una limitacion conocida del plan gratuito, no un error del sistema.
 
 
 
-Durante la integracion surgieron necesidades no anticipadas en el diseno original del backend, como el endpoint de configuracion institucional y la inclusion de datos anidados completos en las respuestas de horarios, lo cual confirma el valor de probar cada pieza con datos reales en vez de solo disenar sobre el papel.
+Las bases de datos local y de produccion son independientes entre si. La migracion de datos entre ambas se realizo con pg\_dump en modo solo datos, seguido de una limpieza de tablas con TRUNCATE y CASCADE antes de la importacion, para evitar conflictos de llaves duplicadas.
 
 
 
-PROXIMOS PASOS INMEDIATOS
+PROYECTO COMPLETADO
 
 
 
-Revisar de extremo a extremo el flujo completo de cada uno de los cinco roles. Preparar el archivo Dockerfile y docker-compose para el backend. Configurar variables de entorno para produccion. Desplegar en Render y validar acceso publico.
+Las nueve fases del proyecto quedan cerradas. El sistema esta accesible publicamente en internet, con los cinco roles funcionando de extremo a extremo contra datos reales en produccion.
 

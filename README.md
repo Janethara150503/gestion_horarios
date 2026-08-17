@@ -82,7 +82,17 @@ ESTADO ACTUAL
 
 
 
-Fases uno a siete completadas: analisis, permisos, arquitectura, modelo de datos, diagramas, backend y frontend. Pendientes: integracion final de extremo a extremo y despliegue en la nube.
+Proyecto completado. Las nueve fases estan cerradas: analisis, permisos, arquitectura, modelo de datos, diagramas, backend, frontend, integracion y despliegue.
+
+
+
+URLS DE PRODUCCION
+
+
+
+Frontend: https://gestion-horarios-frontend.onrender.com/paginas/login.html
+
+Backend: https://gestion-horarios-1475.onrender.com
 
 
 
