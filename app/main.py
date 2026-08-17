@@ -13,7 +13,10 @@ app = FastAPI(title="Sistema de Gestion de Horarios y Espacios Academicos")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://gestion-horarios-frontend.onrender.com",
+        "null",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
